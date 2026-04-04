@@ -36,17 +36,18 @@ Enforce situational logic via prioritized rules.
 5. [PRAGMATIC-BOUNDARY]: Distinguish between types of obligation and meaning in context.
 
 --- ⚙️ STRUCTURAL & POSITIONAL CONTROL ---
-6. [ANSWER-FIRST]: Assign keys BEFORE content. BUCKET RANDOMIZATION: 10 items = 3A, 2B, 2C, 3D. Max 2 identical in a row.
-7. [THE-SHUFFLE]: Randomize bucket order to destroy cycles (A-B-C-D). Every letter (A-D) must appear.
-8. [FLOATING-MARKER]: Vary sentence structure so students cannot scan mechanically.
-9. [SYNTACTIC-DISTANCE]: (Level 5+) Separate subject from verb using relative clauses/prepositional phrases. Mix simple, compound, and complex sentence styles (e.g., "Although," "Seeing her," "If...then").
-10. [ADVANCED-COMP]: Test "as good a student as", "of the two", "the more..., the more...", "not so much A as B".
+6. [ITEM-SEPARATION]: Every numbered item (1., 2., 3., etc.) MUST start on a NEW LINE using an HTML <p> or <br> tag. DO NOT bunch them together in a single paragraph.
+7. [ANSWER-FIRST]: Assign keys BEFORE content. BUCKET RANDOMIZATION: 10 items = 3A, 2B, 2C, 3D. Max 2 identical in a row.
+8. [THE-SHUFFLE]: Randomize bucket order to destroy cycles (A-B-C-D). Every letter (A-D) must appear.
+9. [FLOATING-MARKER]: Vary sentence structure so students cannot scan mechanically.
+10. [SYNTACTIC-DISTANCE]: (Level 5+) Separate subject from verb using relative clauses/prepositional phrases. Mix simple, compound, and complex sentence styles (e.g., "Although," "Seeing her," "If...then").
+11. [ADVANCED-COMP]: Test "as good a student as", "of the two", "the more..., the more...", "not so much A as B".
 
 --- 🎨 LAYOUT & VISUALS ---
-11. [SEPARATE-TABLES]: Use a separate HTML <table> for each PART.
-12. [HEADER-STYLE]: Header row: Bold, Centered, White text, dark background (unless Instruction Background is enabled).
-13. [COLUMN-BALANCE]: In 2-column layouts, distribute items EVENLY (e.g., 5+5). NEVER leave a column empty.
-14. [MCQ-FORMAT]: 
+12. [SEPARATE-TABLES]: Use a separate HTML <table> for each PART.
+13. [HEADER-STYLE]: Header row: Bold, Centered, White text, dark background (unless Instruction Background is enabled).
+14. [COLUMN-BALANCE]: In 2-column layouts, distribute items EVENLY (e.g., 5+5). NEVER leave a column empty.
+15. [MCQ-FORMAT]: 
     - Options MUST start on a new line below the question stem.
     - For short options: Use a nested HTML <table> with 4 columns (A, B, C, D) to ensure perfect alignment.
     - INDENTATION: You MUST put 7 non-breaking spaces (&nbsp;) before "A." in the first cell of the options table.
@@ -56,13 +57,13 @@ Enforce situational logic via prioritized rules.
     - NO vertical lists. NO 2x2 grids.
 
 --- 🎭 SCENARIO & CONTENT ---
-15. [SCENARIO-CHAOS]: Use unique, vivid scenarios. Forbidden from repeating themes.
-16. [ANTI-ROBOT]: Forbidden from repetitive sentence starters. Randomize all subjects and lead-ins.
-17. [TOPIC-OVERRIDE]: Topic box overrides template defaults. If topic is "Past Simple", ALL items (even Spelling) must be contextually linked.
-18. [WORD-FORM-SHIFT]: Reading questions must not repeat exact wording from text (Paraphrase!).
-19. [L1-SHADOW]: Include distractors reflecting common L1-to-L2 errors (e.g., "is go").
-20. [FIREWALL]: Ensure no vocabulary/grammar in Part B leaks answers to Part A.
-21. [NATURALIZE]: Replace 20% of formal verbs with phrasal verbs (e.g., "look into" instead of "investigate").
+16. [SCENARIO-CHAOS]: Use unique, vivid scenarios. Forbidden from repeating themes.
+17. [ANTI-ROBOT]: Forbidden from repetitive sentence starters. Randomize all subjects and lead-ins.
+18. [TOPIC-OVERRIDE]: Topic box overrides template defaults. If topic is "Past Simple", ALL items (even Spelling) must be contextually linked.
+19. [WORD-FORM-SHIFT]: Reading questions must not repeat exact wording from text (Paraphrase!).
+20. [L1-SHADOW]: Include distractors reflecting common L1-to-L2 errors (e.g., "is go").
+21. [FIREWALL]: Ensure no vocabulary/grammar in Part B leaks answers to Part A.
+22. [NATURALIZE]: Replace 20% of formal verbs with phrasal verbs (e.g., "look into" instead of "investigate").
 
 ### PRIORITY: COGNITIVE INTEGRITY RULES ARE ABSOLUTE. ###
 `;
@@ -159,7 +160,7 @@ export const DEFAULT_STRICT_RULES: StrictRule[] = [
     id: 'rule-no-markdown',
     label: 'SUPPORT: NO MARKDOWN',
     description: 'Ban asterisks. Use HTML tags only.',
-    promptInjection: 'STRICT SUPPORT: HTML tags ONLY (<b>, <table>). No asterisks. DO NOT use <u> tags.',
+    promptInjection: 'STRICT SUPPORT: HTML tags ONLY (<b>, <table>, <p>, <br>). No asterisks. DO NOT use <u> tags.',
     active: true,
     priority: 'High',
     category: 'General'

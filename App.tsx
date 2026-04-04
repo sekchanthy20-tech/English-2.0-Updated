@@ -750,7 +750,7 @@ function App() {
             - Every <td> MUST have a border: 1pt solid #334155; padding: 10px; vertical-align: top;
             - This creates a professional worksheet grid with ${effectiveCols} columns.)`;
       } else {
-        formatInstruction = `(FORMAT: Standard numbered list. DO NOT use tables or columns.)`;
+        formatInstruction = `(FORMAT: Standard numbered list. Every numbered item (1., 2., 3., etc.) MUST start on a NEW LINE using an HTML <p> or <br> tag. DO NOT bunch them together in a single paragraph. DO NOT use tables or columns.)`;
       }
         
       return `PART ${String.fromCharCode(65 + idx)} [MANDATORY INSTRUCTION HEADER: ${t.professionalLabel || t.label}]: ${t.prompt.replace(/{{BLANK}}/g, selectedBlankStyle)} (GENERATE EXACTLY ${overrideItems} ITEMS) (USE THIS ANSWER KEY: ${blueprintStr}) ${formatInstruction}`;
