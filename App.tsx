@@ -716,12 +716,14 @@ function App() {
         // Option 1 (Clean): 1 column, 2 rows (Header + All items in one cell)
         if (effectiveCols > 1) {
           formatInstruction = `(MANDATORY FORMAT: Use a real HTML <table> with ${effectiveCols} columns. 
+            ${isPartBackgroundEnabled ? 'MANDATORY: Apply a unique background style from the PART BACKGROUND PROTOCOL to this <table> tag.' : ''}
             - Row 1: Header row spanning all ${effectiveCols} columns (colspan="${effectiveCols}"), with ${headerStyle}. Title: "PART ${String.fromCharCode(65 + idx)}: ${t.professionalLabel || t.label}".
             - Row 2: Distribute the ${overrideItems} items STRICTLY EVENLY across ${effectiveCols} columns. (e.g. if 10 items, put 5 in Col 1 and 5 in Col 2).
             - The table MUST have a border: 1.5pt solid #334155.
             - DO NOT put borders between the items inside the cells. This is the "Clean" layout with ${effectiveCols} columns.)`;
         } else {
           formatInstruction = `(MANDATORY FORMAT: Use a real HTML <table> with 1 column and EXACTLY 2 rows. 
+            ${isPartBackgroundEnabled ? 'MANDATORY: Apply a unique background style from the PART BACKGROUND PROTOCOL to this <table> tag.' : ''}
             - Row 1: Header row with ${headerStyle}. Title: "PART ${String.fromCharCode(65 + idx)}: ${t.professionalLabel || t.label}".
             - Row 2: A single <td> containing ALL ${overrideItems} items as a standard numbered list. 
             - The table MUST have a border: 1.5pt solid #334155.
@@ -731,12 +733,14 @@ function App() {
         // Option 2 (Lined): 1 column, multiple rows (Header + One row per item)
         if (effectiveCols > 1) {
           formatInstruction = `(MANDATORY FORMAT: Use a real HTML <table> with ${effectiveCols} columns. 
+            ${isPartBackgroundEnabled ? 'MANDATORY: Apply a unique background style from the PART BACKGROUND PROTOCOL to this <table> tag.' : ''}
             - Row 1: Header row spanning all ${effectiveCols} columns (colspan="${effectiveCols}"), with ${headerStyle}. Title: "PART ${String.fromCharCode(65 + idx)}: ${t.professionalLabel || t.label}".
             - Subsequent rows: Distribute the ${overrideItems} items STRICTLY EVENLY across ${effectiveCols} columns.
             - Every <td> MUST have a border: 1pt solid #334155; padding: 10px;
             - This creates a lined grid with ${effectiveCols} columns.)`;
         } else {
           formatInstruction = `(MANDATORY FORMAT: Use a real HTML <table> with 1 column. 
+            ${isPartBackgroundEnabled ? 'MANDATORY: Apply a unique background style from the PART BACKGROUND PROTOCOL to this <table> tag.' : ''}
             - Row 1: Header row with ${headerStyle}. Title: "PART ${String.fromCharCode(65 + idx)}: ${t.professionalLabel || t.label}".
             - Subsequent rows: Each row contains EXACTLY ONE item.
             - Every <td> MUST have a border: 1pt solid #334155; padding: 10px;
@@ -745,12 +749,13 @@ function App() {
       } else if (globalLayout === 2) {
         // Option 3 (Grid): 2 columns, multiple rows (Header + Items distributed)
         formatInstruction = `(MANDATORY FORMAT: Use a real HTML <table> with ${effectiveCols} columns. 
+            ${isPartBackgroundEnabled ? 'MANDATORY: Apply a unique background style from the PART BACKGROUND PROTOCOL to this <table> tag.' : ''}
             - Row 1: Header row spanning all ${effectiveCols} columns (colspan="${effectiveCols}"), with ${headerStyle}. Title: "PART ${String.fromCharCode(65 + idx)}: ${t.professionalLabel || t.label}".
             - Subsequent rows: Distribute the ${overrideItems} items STRICTLY EVENLY across ${effectiveCols} columns (one item per cell).
             - Every <td> MUST have a border: 1pt solid #334155; padding: 10px; vertical-align: top;
             - This creates a professional worksheet grid with ${effectiveCols} columns.)`;
       } else {
-        formatInstruction = `(FORMAT: Standard numbered list. Every numbered item (1., 2., 3., etc.) MUST start on a NEW LINE using an HTML <p> or <br> tag. DO NOT bunch them together in a single paragraph. DO NOT use tables or columns.)`;
+        formatInstruction = `(FORMAT: Standard numbered list. ${isPartBackgroundEnabled ? 'MANDATORY: Wrap the entire part in a <div style="..."> with a unique background style from the PART BACKGROUND PROTOCOL.' : ''} Every numbered item (1., 2., 3., etc.) MUST start on a NEW LINE using an HTML <p> or <br> tag. DO NOT bunch them together in a single paragraph. DO NOT use tables or columns.)`;
       }
         
       return `PART ${String.fromCharCode(65 + idx)} [MANDATORY INSTRUCTION HEADER: ${t.professionalLabel || t.label}]: ${t.prompt.replace(/{{BLANK}}/g, selectedBlankStyle)} (GENERATE EXACTLY ${overrideItems} ITEMS) (USE THIS ANSWER KEY: ${blueprintStr}) ${formatInstruction}`;

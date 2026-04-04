@@ -26,12 +26,15 @@ export const GLOBAL_STRICT_COMMAND = `### DPSS ULTIMATE TEST BUILDER: ELITE PROT
 Enforce situational logic via prioritized rules.
 
 --- 🧠 COGNITIVE INTEGRITY (MANDATORY) ---
-1. [NEAR-MISS]: Every MCQ must have 1 contextually inferior "Near-Miss" distractor (grammatically correct but contextually wrong, e.g., Must vs Have To).
+1. [NEAR-MISS]: Every MCQ must have 1 contextually inferior "Near-Miss" distractor (grammatically correct but contextually wrong).
+    - Example: "Angkor Wat is beautiful. You ____ visit it." (A. Have to [Incorrect - external obligation], B. Must [Correct - opinion/recommendation])
 2. [NO-FREE-VERB]: Never place the main auxiliary or modal verb directly in the question stem if it reveals the structure. 
     - Weak: "You must ____ a helmet." 
     - Strong: "You ____ a helmet." (Options: A. must wear, B. have to wear, etc.)
     - This forces students to process meaning and choose the correct modal/auxiliary + verb form together.
-3. [SITUATIONAL-EVIDENCE]: Grammar must be inferred from context, not obvious time markers (yesterday, now).
+3. [SITUATIONAL-EVIDENCE]: Grammar must be inferred from context/evidence, not obvious time markers (yesterday, now).
+    - Weak: "She ____ her homework yesterday."
+    - Strong: "Her notebook is closed. She ____ her homework." (Student must infer completion from evidence).
 4. [PURE-VOCAB]: In vocabulary sections, all options must be the same part of speech and grammatical form.
 5. [PRAGMATIC-BOUNDARY]: Distinguish between types of obligation and meaning in context.
 
@@ -42,6 +45,7 @@ Enforce situational logic via prioritized rules.
 9. [FLOATING-MARKER]: Vary sentence structure so students cannot scan mechanically.
 10. [SYNTACTIC-DISTANCE]: (Level 5+) Separate subject from verb using relative clauses/prepositional phrases. Mix simple, compound, and complex sentence styles (e.g., "Although," "Seeing her," "If...then").
 11. [ADVANCED-COMP]: Test "as good a student as", "of the two", "the more..., the more...", "not so much A as B".
+    - Example: "She is as good a student as my father is." (Precision grammar).
 
 --- 🎨 LAYOUT & VISUALS ---
 12. [SEPARATE-TABLES]: Use a separate HTML <table> for each PART.
@@ -49,6 +53,7 @@ Enforce situational logic via prioritized rules.
 14. [COLUMN-BALANCE]: In 2-column layouts, distribute items EVENLY (e.g., 5+5). NEVER leave a column empty.
 15. [MCQ-FORMAT]: 
     - Options MUST start on a new line below the question stem.
+    - STRICT: You are FORBIDDEN from using "-> A. B. C. D." or similar inline shortcuts.
     - For short options: Use a nested HTML <table> with 4 columns (A, B, C, D) to ensure perfect alignment.
     - INDENTATION: You MUST put 7 non-breaking spaces (&nbsp;) before "A." in the first cell of the options table.
     - SPACING: Ensure there is clear visual space between options.
@@ -69,7 +74,11 @@ Enforce situational logic via prioritized rules.
 `;
 
 export const PART_BACKGROUND_INSTRUCTION = `### PART BACKGROUND PROTOCOL ###
-For each PART (A, B, C, etc.), apply a unique background style to the table or its container.
+For each PART (A, B, C, etc.), apply a unique background style.
+- If the part is in a <table>, apply the style to the <table> tag.
+- If the part is a list, you MUST wrap the entire part (header + items) in a <div style="...">.
+- MANDATORY: The background MUST be applied to a container that includes the instruction header.
+- Ensure the background is clearly visible by using padding (e.g. padding: 15pt;).
 Rotate between these styles:
 1. Light Blue: background-color: #f0f9ff;
 2. Soft Green: background-color: #f0fdf4;

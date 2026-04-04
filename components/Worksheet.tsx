@@ -55,7 +55,8 @@ const Worksheet: React.FC<WorksheetProps> = ({
             font-size: ${brandSettings.fontSize || 12}pt !important; 
             line-height: 1.15 !important;
           }
-          .prose p, .prose div { margin-bottom: 8pt !important; padding: 0 !important; }
+          .prose p, .prose div { margin-bottom: 8pt !important; }
+          .prose div[style*="background"] { padding: 15pt !important; border-radius: 8pt; margin-bottom: 20pt !important; }
           .prose li, .prose ol, .prose ul { margin: 0 !important; padding: 0 !important; }
           .prose table { border-collapse: collapse !important; width: 100% !important; border: 1.5pt solid black !important; table-layout: fixed; margin-bottom: 0 !important; }
           .prose table table { border: none !important; margin-top: 5pt !important; }
