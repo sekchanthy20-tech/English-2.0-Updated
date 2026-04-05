@@ -49,6 +49,11 @@ Enforce situational logic via prioritized rules.
    - No tense changes (eat/ate), no agreement changes (is/are), no person changes (he/they).
    - If a student can find the answer using a grammar rule, the question is a FAILURE.
    - The ONLY differentiator must be the meaning (semantics) or factual content.
+5.2 [TRUE/FALSE FORMAT STRICTNESS]:
+   - For True/False or True/False/Not Given questions, you are STRICTLY FORBIDDEN from generating A, B, C, D options.
+   - Do NOT use multiple-choice format. Do NOT put (_____) at the end of the sentence.
+   - The format MUST be exactly: "1. ______ [Statement]".
+   - The answer key MUST be T, F, or NG.
 
 --- ⚙️ STRUCTURAL & POSITIONAL CONTROL ---
 6. [ITEM-SEPARATION]: Every numbered item (1., 2., 3., etc.) MUST start on a NEW LINE using an HTML <p> or <br> tag. DO NOT bunch them together in a single paragraph.
@@ -87,7 +92,7 @@ Enforce situational logic via prioritized rules.
 
 --- 🎭 SCENARIO & CONTENT ---
 16. [SCENARIO-CHAOS]: Use unique, vivid scenarios. Forbidden from repeating themes.
-17. [ANTI-ROBOT]: Forbidden from repetitive sentence starters. Randomize all subjects and lead-ins.
+17. [ANTI-ROBOT]: Forbidden from repetitive sentence starters. MANDATORY: Randomize all subjects and lead-ins. You MUST use a wide variety of subjects (e.g., "The committee", "My neighbor", "A stray cat", "The researchers", "She", "They"). DO NOT start multiple sentences with "I" or the same character's name. Mix singular and plural subjects.
 18. [TOPIC-OVERRIDE]: Topic box overrides template defaults. If topic is "Past Simple", ALL items (even Spelling) must be contextually linked. If the instructions are about Mixed Grammar, follow this instruction strictly
 19. [WORD-FORM-SHIFT]: Reading questions must not repeat exact wording from text (Paraphrase, synonym and sometimes easy idiom!).
 20. [L1-SHADOW]: Don't often Include distractors reflecting common L1-to-L2 errors (e.g., "is go").
@@ -379,7 +384,7 @@ export const DEFAULT_MASTER_PROTOCOLS: StrictRule[] = [
     id: 'mp-answer-key', 
     label: 'ANSWER KEY & LAYOUT LOGIC', 
     description: 'Controls answer distribution and visual formatting.', 
-    promptInjection: 'LAYOUT & KEYS: 1. Assign keys BEFORE content using Bucket Randomization (ensure A-D all appear, max 2 identical in a row). 2. Distribute items evenly in 2-column layouts. 3. MCQ Layout: Short options on one line (10 spaces between), long options on double lines. DO NOT use vertical lists.', 
+    promptInjection: 'LAYOUT & KEYS: 1. Use the pre-assigned answer keys provided for each part. 2. Distribute items evenly in 2-column layouts. 3. MCQ Layout: Short options on one line (10 spaces between), long options on double lines. DO NOT use vertical lists.', 
     active: true, 
     priority: 'High', 
     category: 'General' 
@@ -437,6 +442,24 @@ export const DEFAULT_MASTER_PROTOCOLS: StrictRule[] = [
     active: true,
     priority: 'High',
     category: 'Grammar'
+  },
+  {
+    id: 'mp-level-calibration',
+    label: 'EXTREME STRICT: LEVEL CALIBRATION',
+    description: 'Strictly scales vocabulary, sentence length, and text complexity according to the target academic level.',
+    promptInjection: 'LEVEL CALIBRATION IS MANDATORY. You must strictly adapt text length, vocabulary, and grammar to the selected level. KIDS/BEGINNER: Max 50-80 words. Super easy vocabulary (A1). Short, simple sentences (Subject-Verb-Object). NO words like "established", "vital", "irrigation". NO inferential or critical thinking questions. Keep it literal. ELEMENTARY/PRE-INT: 100-150 words. Basic compound sentences. INTERMEDIATE: 200-300 words. ADVANCED: 400+ words, complex academic vocabulary. If the level is Kids, the text MUST look like a children\'s book.',
+    active: true,
+    priority: 'High',
+    category: 'General'
+  },
+  {
+    id: 'mp-no-inline-keys',
+    label: 'NO INLINE ANSWER KEYS',
+    description: 'Prevents answer keys from being printed next to the questions.',
+    promptInjection: 'NO INLINE KEYS: NEVER show the answers (True), (False), or (A) inside the test questions or sentences. All answer keys MUST be placed completely separate at the very end of the entire test output, under a "Teacher Answer Key" section.',
+    active: true,
+    priority: 'High',
+    category: 'General'
   }
 ];
 
@@ -487,12 +510,12 @@ D. Teacher Mode (Error Correction: 1 paragraph with 5 errors, Students rewrite b
   { id: 'g_cloze_passage_short', category: 'GRAMMAR', label: 'Cloze', professionalLabel: 'Complete the cloze passage by filling in the blanks with appropriate grammatical forms.', prompt: 'Part: Complete the cloze passage by filling in the blanks with appropriate words.', columnCount: 0 },
   
   // READING
-  { id: 'r_tf_stmt', category: 'READING', label: 'True/False', professionalLabel: 'Read the following statements and determine if they are True or False based on the text.', prompt: 'Part: Read the following statements and determine if they are True or False based on the text about {{TOPIC}}. Follow with True/ False statements using heavy synonyms and word-form changes. Use style "1. (_____)" (5 underscores). STRICT: No MCQ options.', columnCount: 1 },
+  { id: 'r_tf_stmt', category: 'READING', label: 'True/False', professionalLabel: 'Read the following statements and determine if they are True or False based on the text.', prompt: 'Part: Read the following statements and determine if they are True or False based on the text about {{TOPIC}}. FORMAT STRICTLY AS: "1. ______ [Statement]". DO NOT GENERATE A, B, C, D OPTIONS. DO NOT USE MULTIPLE CHOICE FORMAT. MANDATORY: Use a wide variety of subjects (e.g., "The dog", "Sarah", "The weather", "They"). DO NOT start every sentence with "I" or the same character\'s name.', columnCount: 1 },
   { id: 'r_mcq', category: 'READING', label: 'MCQ', professionalLabel: 'Choose the appropriate options A, B, C or D based on the detailed reading passage.', prompt: 'Part: Choose the appropriate options A, B, C or D based on the detailed reading passage about {{TOPIC}}. Follow with MCQ testing critical thinking. Format: Put options on a new line below the question. Use a nested 4-column table for options. MANDATORY: Put 7 non-breaking spaces (&nbsp;) before "A." in the first cell for indentation.', columnCount: 1 },
   { id: 'r_short_answer', category: 'READING', label: 'Short Answer', professionalLabel: 'Complete the summary using no more than two words or a number from the text.', prompt: 'Part: Complete the summary using no more than two words or a number from the text about {{TOPIC}}. Follow with fill-in-the-blank summary sentences requiring exact words from the text. STRICT: No MCQ options.', columnCount: 1 },
   { id: 'r_inferential', category: 'READING', label: 'Inferential', professionalLabel: 'Answer the following inferential questions based on the author\'s perspective.', prompt: 'Part: Answer the following inferential questions based on the author\'s perspective about {{TOPIC}}. Follow with discussion questions testing author attitude and implications. STRICT: No MCQ options.', columnCount: 1 },
   { id: 'r_critical_thinking', category: 'READING', label: 'Critical Thinking', professionalLabel: 'Apply critical thinking to answer the following questions based on the analytical reading of the text.', prompt: 'Part: Apply critical thinking to answer the following questions based on the text.', columnCount: 1 },
-  { id: 'r_tfng', category: 'READING', label: 'T/F/NG Analysis', professionalLabel: 'Read the text and indicate whether the statements are True, False, or Not Given.', prompt: 'Part: Read the text and indicate whether the statements are True, False, or Not Given about {{TOPIC}}. Follow with True/False/Not Given questions testing information boundaries. Use style "1. (_____)" (5 underscores). STRICT: No MCQ options.', columnCount: 0 },
+  { id: 'r_tfng', category: 'READING', label: 'T/F/NG Analysis', professionalLabel: 'Read the text and indicate whether the statements are True (T), False (F), or Not Given (NG).', prompt: 'Part: Read the text and indicate whether the statements are True (T), False (F), or Not Given (NG) about {{TOPIC}}. FORMAT STRICTLY AS: "1. ______ [Statement]". DO NOT GENERATE A, B, C, D OPTIONS. DO NOT USE MULTIPLE CHOICE FORMAT. MANDATORY: Use a wide variety of subjects (e.g., "The dog", "Sarah", "The weather", "They"). DO NOT start every sentence with "I" or the same character\'s name.', columnCount: 0 },
   { 
     id: 'r_mcq_expert', 
     category: 'READING', 
@@ -527,7 +550,7 @@ D. Teacher Mode (Error Correction: 1 paragraph with 5 errors, Students rewrite b
   { id: 'v_copy', category: 'VOCABULARY', label: 'Copy', professionalLabel: 'Transcribe the following vocabulary exercises accurately into your notebook.', prompt: 'Part: Transcribe the following vocabulary exercises accurately into your notebook. STRICT: No MCQ options.', columnCount: 1 },
   { id: 'v_synonym_swap', category: 'VOCABULARY', label: 'Synonym Swap', professionalLabel: 'Rewrite each sentence by replacing the underlined word with an appropriate synonym.', prompt: 'Part: Rewrite each sentence by replacing the underlined word with an appropriate synonym. Use a long blank line. STRICT: No MCQ options.', columnCount: 1 },
   { id: 'v_mcq', category: 'VOCABULARY', label: 'MCQ', professionalLabel: 'Choose the appropriate options A, B, C or D to complete each sentence.', prompt: 'Part: Choose the appropriate options A, B, C or D to complete each sentence. Format: Put options on a new line below the question. Use a nested 4-column table for options. MANDATORY: Put 7 non-breaking spaces (&nbsp;) before "A." in the first cell for indentation. Apply Grammar Blackout.', columnCount: 1 },
-  { id: 'v_tf', category: 'VOCABULARY', label: 'T/F', professionalLabel: 'Read the statements and indicate whether they are True (T) or False (F).', prompt: 'Part: Read the statements and indicate whether they are True (T) or False (F). Use style "1. (_____)" (5 underscores). STRICT: No MCQ options.', columnCount: 1 },
+  { id: 'v_tf', category: 'VOCABULARY', label: 'T/F', professionalLabel: 'Read the statements and indicate whether they are True (T) or False (F).', prompt: 'Part: Read the statements and indicate whether they are True (T) or False (F). FORMAT STRICTLY AS: "1. ______ [Statement]". DO NOT GENERATE A, B, C, D OPTIONS. DO NOT USE MULTIPLE CHOICE FORMAT. MANDATORY: Use a wide variety of subjects (e.g., "The dog", "Sarah", "The weather", "They"). DO NOT start every sentence with "I" or the same character\'s name.', columnCount: 1 },
   { id: 'v_speaking', category: 'VOCABULARY', label: 'Speaking', professionalLabel: 'Discuss the following questions with a partner to practice your speaking skills.', prompt: 'Part: Discuss the following questions with a partner to practice your speaking skills. Generate open-ended discussion questions related to {{TOPIC}}. STRICT: No MCQ options.', columnCount: 1 },
   { id: 'v_synonyms', category: 'VOCABULARY', label: 'Synonyms', professionalLabel: 'Provide appropriate synonyms for the vocabulary words in the table.', prompt: 'Part: Provide appropriate synonyms for the vocabulary words in the table.\n5 columns: 1 vocabulary, 2 synonym 1, 3, syn 2, ....\nIf there are more than 5 synonyms, please have another row.', columnCount: 5 },
   { id: 'v_synonym_writing', category: 'VOCABULARY', label: 'Syn Writing', professionalLabel: 'Complete the synonym writing task as instructed.', prompt: 'Part: Complete the synonym writing task as instructed.\n5 columns: 1 vocabulary, 2 synonym 1, 3, syn 2, ....\nIf there are more than 5 synonyms, please have another row.', columnCount: 1 },

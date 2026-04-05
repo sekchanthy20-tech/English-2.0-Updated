@@ -40,6 +40,7 @@ export interface StrictRule {
   active: boolean;
   priority: Priority;
   category: RuleCategory;
+  isCustomized?: boolean;
 }
 
 export interface InstructionTemplate {
@@ -50,6 +51,7 @@ export interface InstructionTemplate {
   category: 'GRAMMAR' | 'VOCABULARY' | 'READING' | 'TABLES' | 'KIDS';
   displayLetter?: string;
   columnCount?: number;
+  isCustomized?: boolean;
 }
 
 export interface ModuleLogic {

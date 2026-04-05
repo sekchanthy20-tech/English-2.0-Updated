@@ -21,6 +21,11 @@ interface SidebarProps {
   templates: any[];
   activeTemplate: any;
   onTemplateSelect: (t: any) => void;
+  isSingleReadingText: boolean;
+  onSingleReadingTextChange: (val: boolean) => void;
+  isRelaxingBackgroundEnabled: boolean;
+  onRelaxingBackgroundChange: (val: boolean) => void;
+  onRandomizeBackground: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -31,7 +36,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClearCanvas, onToggleSettings,
   history, onLoadHistory, onDeleteHistory, onRenameHistory,
   brandSettings,
-  templates, activeTemplate, onTemplateSelect
+  templates, activeTemplate, onTemplateSelect,
+  isSingleReadingText, onSingleReadingTextChange,
+  isRelaxingBackgroundEnabled, onRelaxingBackgroundChange,
+  onRandomizeBackground
 }) => {
   const [editingHistId, setEditingHistId] = useState<string | null>(null);
   const [tempTitle, setTempTitle] = useState('');
@@ -85,6 +93,38 @@ const Sidebar: React.FC<SidebarProps> = ({
               {mod}
             </button>
           ))}
+        </div>
+
+        {activeModule.toUpperCase() === 'READING' && (
+          <div className="flex items-center justify-between bg-blue-50 p-3 rounded-xl border border-blue-100">
+            <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">One Reading Text for All Parts</span>
+            <button 
+              onClick={() => onSingleReadingTextChange(!isSingleReadingText)}
+              className={`w-8 h-4 rounded-full transition-all relative ${isSingleReadingText ? 'bg-blue-600' : 'bg-slate-300'}`}
+            >
+              <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isSingleReadingText ? 'left-[18px]' : 'left-[2px]'}`}></div>
+            </button>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-2 bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+          <div className="flex items-center justify-between">
+            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Relaxing Background</span>
+            <button 
+              onClick={() => onRelaxingBackgroundChange(!isRelaxingBackgroundEnabled)}
+              className={`w-8 h-4 rounded-full transition-all relative ${isRelaxingBackgroundEnabled ? 'bg-emerald-600' : 'bg-slate-300'}`}
+            >
+              <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isRelaxingBackgroundEnabled ? 'left-[18px]' : 'left-[2px]'}`}></div>
+            </button>
+          </div>
+          {isRelaxingBackgroundEnabled && (
+            <button 
+              onClick={onRandomizeBackground}
+              className="w-full py-2 bg-white text-emerald-600 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm flex items-center justify-center gap-2"
+            >
+              <i className="fa-solid fa-shuffle"></i> Randomize Scene
+            </button>
+          )}
         </div>
 
         {/* History Section */}

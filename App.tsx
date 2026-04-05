@@ -102,6 +102,22 @@ function App() {
   const [isInstructionBackgroundEnabled, setIsInstructionBackgroundEnabled] = useState(true);
   const [globalLayout, setGlobalLayout] = useState<number>(0); // 0: Clean, 1: Lined, 2: Grid
   
+  const [isSingleReadingText, setIsSingleReadingText] = useState(false);
+  const [isRelaxingBackgroundEnabled, setIsRelaxingBackgroundEnabled] = useState(true);
+  const [currentBackground, setCurrentBackground] = useState("https://images.unsplash.com/photo-1600456899121-68eda5705257?q=80&w=2000&auto=format&fit=crop"); // Angkor Wat default
+
+  const randomizeBackground = () => {
+    const backgrounds = [
+      "https://images.unsplash.com/photo-1600456899121-68eda5705257?q=80&w=2000&auto=format&fit=crop", // Angkor Wat
+      "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=2000&auto=format&fit=crop", // Forest morning
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2000&auto=format&fit=crop", // Ocean morning
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2000&auto=format&fit=crop", // Mountains
+      "https://images.unsplash.com/photo-1444084316824-dc26d6657664?q=80&w=2000&auto=format&fit=crop"  // Relaxing lake
+    ];
+    const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+    setCurrentBackground(randomBg);
+  };
+
   const [activeLogicCategory, setActiveLogicCategory] = useState<RuleCategory>('General');
   const [expandedRuleId, setExpandedRuleId] = useState<string | null>(null);
   const [activeProtocolCategory, setActiveProtocolCategory] = useState<RuleCategory>('General');
@@ -324,6 +340,7 @@ function App() {
       
       // Force update existing defaults from constants.ts
       const updated = parsed.map((p: any) => {
+        if (p.isCustomized) return p;
         const fresh = DEFAULT_MASTER_PROTOCOLS.find(f => f.id === p.id);
         return fresh ? { ...p, ...fresh } : p;
       });
@@ -342,6 +359,7 @@ function App() {
 
       // Force update existing defaults from constants.ts
       const updated = parsed.map((r: any) => {
+        if (r.isCustomized) return r;
         const fresh = DEFAULT_STRICT_RULES.find(f => f.id === r.id);
         return fresh ? { ...r, ...fresh } : r;
       });
@@ -360,6 +378,7 @@ function App() {
       
       // Force update all fields from INITIAL_TEMPLATES for existing IDs
       const updated = parsed.map((t: any) => {
+        if (t.isCustomized) return t;
         const fresh = INITIAL_TEMPLATES.find(f => f.id === t.id);
         if (fresh) {
           return {
@@ -711,9 +730,29 @@ function App() {
       const overrideCol = columnOverrides[t.id] || 0;
       const overrideItems = itemCountOverrides[t.id] || 10;
       
-      // Generate unique blueprint for this part
-      const blueprint = generateNeuralBlueprint(overrideItems);
-      const blueprintStr = blueprint.map((key, i) => `${i + 1}:${key}`).join(', ');
+      let blueprintStr = '';
+      
+      // Determine the type of question to generate the correct blueprint
+      const isTF = t.id.includes('tf') || t.label.includes('True/False');
+      const isMCQ = t.id.includes('mcq') || t.label.includes('MCQ');
+      const isOpenEnded = t.id.includes('short_answer') || t.id.includes('inferential') || t.id.includes('critical_thinking') || t.id.includes('rewrite') || t.id.includes('speaking');
+
+      if (isTF) {
+        // Generate T/F/NG blueprint
+        const tfKeys = ['T', 'F', 'NG'];
+        const blueprint: string[] = [];
+        for (let i = 0; i < overrideItems; i++) {
+          blueprint.push(tfKeys[Math.floor(Math.random() * tfKeys.length)]);
+        }
+        blueprintStr = `(USE THIS ANSWER KEY: ${blueprint.map((key, i) => `${i + 1}:${key}`).join(', ')})`;
+      } else if (isMCQ || (!isOpenEnded && !isTF)) {
+        // Generate standard A, B, C, D blueprint for MCQs and other closed-ended questions
+        const blueprint = generateNeuralBlueprint(overrideItems);
+        blueprintStr = `(USE THIS ANSWER KEY: ${blueprint.map((key, i) => `${i + 1}:${key}`).join(', ')})`;
+      } else {
+        // Open-ended questions do not get a forced blueprint
+        blueprintStr = `(DO NOT USE A PRE-ASSIGNED ANSWER KEY. Generate natural, accurate answers for the Teacher Answer Key based on the text.)`;
+      }
 
       let formatInstruction = '';
       const headerStyle = isInstructionBackgroundEnabled 
@@ -769,7 +808,7 @@ function App() {
         formatInstruction = `(FORMAT: Standard numbered list. ${isPartBackgroundEnabled ? 'MANDATORY: Wrap the entire part in a <div style="..."> with a unique background style from the PART BACKGROUND PROTOCOL.' : ''} Every numbered item (1., 2., 3., etc.) MUST start on a NEW LINE using an HTML <p> or <br> tag. DO NOT bunch them together in a single paragraph. DO NOT use tables or columns.)`;
       }
         
-      return `PART ${String.fromCharCode(65 + idx)} [MANDATORY INSTRUCTION HEADER: ${t.professionalLabel || t.label}]: ${t.prompt.replace(/{{BLANK}}/g, selectedBlankStyle)} (GENERATE EXACTLY ${overrideItems} ITEMS) (USE THIS ANSWER KEY: ${blueprintStr}) ${formatInstruction}`;
+      return `PART ${String.fromCharCode(65 + idx)} [MANDATORY INSTRUCTION HEADER: ${t.professionalLabel || t.label}]: ${t.prompt.replace(/{{BLANK}}/g, selectedBlankStyle)} (GENERATE EXACTLY ${overrideItems} ITEMS) ${blueprintStr} ${formatInstruction}`;
     }).join('\n\n');
 
     const moduleSafetyGuard = activeModule === 'Grammar'
@@ -782,15 +821,20 @@ function App() {
          - PURE SEMANTICS: Focus 100% on word meanings. All distractors must be grammatically identical to the correct answer.`
       : activeModule === 'Reading'
       ? `[MODULE SAFETY GUARD - CRITICAL]: You are generating a READING assessment. You are strictly FORBIDDEN from testing grammar rules or injecting grammar errors. Focus 100% on comprehension and inference logic.
-         - PASSAGE DIVERSITY: Use a DIFFERENT reading passage for EACH part of the test.
+         - PASSAGE DIVERSITY: ${isSingleReadingText ? 'Use ONE SINGLE reading passage for the ENTIRE test. All parts must refer to this single passage.' : 'Use a DIFFERENT reading passage for EACH part of the test.'}
          - LEVEL ADAPTATION: The length and level of thinking must strictly match the selected Academic Level (${activeLevel}).`
       : '';
 
+    const readingPassageLength = activeLevel === 'Kids/Beginner' ? '50-80 words' : '300-500 words';
+    const readingPassageInstruction = isSingleReadingText 
+      ? `1. GENERATE ONE SINGLE PASSAGE (~${readingPassageLength}) about "${topic}" at the top of the test.` 
+      : `1. GENERATE A UNIQUE, SEPARATE PASSAGE (~${readingPassageLength}) FOR EVERY SINGLE PART of the test. Each part MUST have its own distinct text.`;
+
     const mandatorySequence = activeModule === 'Grammar' 
-      ? `1. PRE-ASSIGN balanced answer keys (A-D).\n2. GENERATE ALL REQUESTED PARTS. ADAPT TITLES TO MATCH "${topic}".\n3. ENFORCE "NO FREE VERB" & "SITUATIONAL EVIDENCE" rules for all grammar stems.\n4. [SOURCE PRIORITY]: If source material is provided, strictly use ALL grammar rules and examples from it. If there are 6 rules, use all 6.`
+      ? `1. GENERATE ALL REQUESTED PARTS. ADAPT TITLES TO MATCH "${topic}".\n2. ENFORCE "NO FREE VERB" & "SITUATIONAL EVIDENCE" rules for all grammar stems.\n3. [SOURCE PRIORITY]: If source material is provided, strictly use ALL grammar rules and examples from it. If there are 6 rules, use all 6.`
       : activeModule === 'Reading'
-      ? `1. GENERATE A PASSAGE (~300-500 words) about "${topic}".\n2. APPLY [NATURAL PARAPHRASE] logic to all questions (No keyword matching).\n3. ENFORCE [READING LOGIC FIREWALL] (Strictly forbidden from testing grammar).\n4. ENSURE all distractors are grammatically identical to the correct answer.`
-      : `1. PRE-ASSIGN balanced answer keys (A-D).\n2. GENERATE ALL REQUESTED PARTS. ADAPT TITLES TO MATCH "${topic}".\n3. ENFORCE [VOCABULARY FIREWALL] (No grammar clues).`;
+      ? `${readingPassageInstruction}\n2. APPLY [NATURAL PARAPHRASE] logic to all questions (No keyword matching).\n3. ENFORCE [READING LOGIC FIREWALL] (Strictly forbidden from testing grammar).\n4. ENSURE all distractors are grammatically identical to the correct answer.`
+      : `1. GENERATE ALL REQUESTED PARTS. ADAPT TITLES TO MATCH "${topic}".\n2. ENFORCE [VOCABULARY FIREWALL] (No grammar clues).`;
 
     const finalLogic = `
 ${moduleSafetyGuard}
@@ -940,9 +984,9 @@ ${componentLogic}
     setExportSettings(prev => ({ ...prev, showModal: false }));
   };
 
-  const updateRule = (id: string, updates: Partial<StrictRule>) => setStrictRules(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
-  const updateProtocol = (id: string, updates: Partial<StrictRule>) => setMasterProtocols(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  const updateTemplate = (id: string, updates: Partial<InstructionTemplate>) => setInstructionTemplates(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+  const updateRule = (id: string, updates: Partial<StrictRule>) => setStrictRules(prev => prev.map(r => r.id === id ? { ...r, ...updates, isCustomized: true } : r));
+  const updateProtocol = (id: string, updates: Partial<StrictRule>) => setMasterProtocols(prev => prev.map(p => p.id === id ? { ...p, ...updates, isCustomized: true } : p));
+  const updateTemplate = (id: string, updates: Partial<InstructionTemplate>) => setInstructionTemplates(prev => prev.map(t => t.id === id ? { ...t, ...updates, isCustomized: true } : t));
   const deleteTemplate = (id: string) => setInstructionTemplates(prev => prev.filter(t => t.id !== id));
   const deleteRule = (id: string) => setStrictRules(prev => prev.filter(r => r.id !== id));
   const deleteProtocol = (id: string) => setMasterProtocols(prev => prev.filter(p => p.id !== id));
@@ -950,6 +994,7 @@ ${componentLogic}
   const syncWithDefaults = () => {
     setMasterProtocols(prev => {
       const updated = prev.map(p => {
+        if (p.isCustomized) return p;
         const defaultProtocol = DEFAULT_MASTER_PROTOCOLS.find(dp => dp.id === p.id);
         return defaultProtocol ? { ...p, ...defaultProtocol } : p;
       });
@@ -959,6 +1004,7 @@ ${componentLogic}
     });
     setStrictRules(prev => {
       const updated = prev.map(r => {
+        if (r.isCustomized) return r;
         const defaultRule = DEFAULT_STRICT_RULES.find(dr => dr.id === r.id);
         return defaultRule ? { ...r, ...defaultRule } : r;
       });
@@ -968,6 +1014,7 @@ ${componentLogic}
     });
     setInstructionTemplates(prev => {
       const updated = prev.map(t => {
+        if (t.isCustomized) return t;
         const defaultTemp = INITIAL_TEMPLATES.find(dt => dt.id === t.id);
         return defaultTemp ? { ...t, ...defaultTemp } : t;
       });
@@ -975,7 +1022,7 @@ ${componentLogic}
       const newItems = INITIAL_TEMPLATES.filter(t => !existingIds.has(t.id));
       return [...updated, ...newItems];
     });
-    alert("Neural protocols and templates synchronized with latest definitions.");
+    alert("Neural protocols and templates synchronized with latest definitions. Custom edits were preserved.");
   };
 
   const hardReset = () => {
@@ -1069,9 +1116,22 @@ ${componentLogic}
             templates={instructionTemplates.filter(t => t.category?.toUpperCase() === activeModule.toUpperCase())}
             activeTemplate={null}
             onTemplateSelect={(t) => toggleInstruction(t.id)}
+            isSingleReadingText={isSingleReadingText}
+            onSingleReadingTextChange={setIsSingleReadingText}
+            isRelaxingBackgroundEnabled={isRelaxingBackgroundEnabled}
+            onRelaxingBackgroundChange={setIsRelaxingBackgroundEnabled}
+            onRandomizeBackground={randomizeBackground}
           />
 
-          <main className={`flex-1 bg-slate-50 flex flex-col overflow-hidden transition-all duration-500 ${isSidebarOpen ? 'md:ml-[240px] ml-0' : 'ml-0'}`}>
+          <main className={`flex-1 flex flex-col overflow-hidden transition-all duration-500 relative ${isSidebarOpen ? 'md:ml-[240px] ml-0' : 'ml-0'}`}>
+            {isRelaxingBackgroundEnabled && (
+               <div 
+                 className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-1000"
+                 style={{ backgroundImage: `url('${currentBackground}')` }}
+               >
+                 <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px]"></div>
+               </div>
+            )}
             {/* Mobile Overlay */}
             {isSidebarOpen && (
               <div 
@@ -1080,7 +1140,7 @@ ${componentLogic}
               />
             )}
             {/* Top Navigation Bar */}
-            <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
+            <header className="h-20 bg-white/90 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between shrink-0 relative z-10">
               <div className="flex items-center gap-6">
                 {!isSidebarOpen && (
                   <button onClick={() => setIsSidebarOpen(true)} className="h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-orange-600 transition-all">
@@ -1149,7 +1209,7 @@ ${componentLogic}
               </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-8 no-scrollbar relative z-10">
               <div className="max-w-6xl mx-auto space-y-8">
                 {/* 3-Column Layout: Templates Left | Global Config | Templates Right */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
