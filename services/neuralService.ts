@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, GenerateContentResponse, Type, ThinkingLevel } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
 import { NeuralEngine, QuickSource, OutlineItem, ExternalKeys } from "../types";
 
 export interface NeuralResult {
@@ -9,45 +8,41 @@ export interface NeuralResult {
 }
 
 // ==========================================
-//  THE NEURAL POWER SOURCE (API KEY HANDLING)
+//  KEY ROTATION ENGINE (Supports 2+ Keys)
 // ==========================================
-const getActiveApiKey = (userKey?: string) => {
-    // 1. Priority: User-provided key from settings (pasted in UI)
+const getGeminiKeys = (userKey?: string): string[] => {
+    // 1. If user provided a custom key in UI settings, use only that
     if (userKey && userKey.trim().length > 0) {
-        console.log("Using custom user-provided API key.");
-        return userKey.trim();
+        return [userKey.trim()];
     }
 
-    // 2. Priority: Platform-injected environment variables
+    // 2. Look for the comma-separated list from Vercel/Vite
+    let envKeys = "";
     try {
-        // Check process.env (standard for Node/some build tools)
-        if (typeof process !== 'undefined' && process.env) {
-            if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
-            if (process.env.API_KEY) return process.env.API_KEY;
-        }
-        
-        // Check import.meta.env (standard for Vite)
+        // Support both Vite (Client) and Process (Server/Node) environments
         const metaEnv = (import.meta as any).env;
-        if (metaEnv) {
-            if (metaEnv.VITE_GEMINI_API_KEY) return metaEnv.VITE_GEMINI_API_KEY;
-            if (metaEnv.GEMINI_API_KEY) return metaEnv.GEMINI_API_KEY;
+        envKeys = metaEnv?.VITE_GEMINI_API_KEYS || metaEnv?.GEMINI_API_KEY || "";
+        
+        if (!envKeys && typeof process !== 'undefined') {
+            envKeys = process.env.VITE_GEMINI_API_KEYS || process.env.GEMINI_API_KEY || "";
         }
     } catch (e) {
-        // Silent fail for environment checks
+        console.error("Environment key lookup failed", e);
     }
 
-    return "";
+    // Clean and split the keys into an array
+    return envKeys.split(',').map(k => k.trim()).filter(k => k.length > 0);
 };
 
 function isQuotaError(error: any): boolean {
     const msg = error?.message?.toLowerCase() || "";
-    return msg.includes("quota") || msg.includes("rate limit") || msg.includes("429") || msg.includes("resource_exhausted");
+    return msg.includes("quota") || msg.includes("429") || msg.includes("resource_exhausted") || msg.includes("limit");
 }
 
 const withRetry = async <T>(
   fn: () => Promise<T>,
-  retries: number = 2,
-  delay: number = 2000
+  retries: number = 1,
+  delay: number = 1500
 ): Promise<T> => {
   try {
     return await fn();
@@ -58,6 +53,9 @@ const withRetry = async <T>(
   }
 };
 
+// ==========================================
+//  MAIN AI GENERATOR (With Rotation)
+// ==========================================
 export const callNeuralEngine = async (
   engine: NeuralEngine,
   prompt: string,
@@ -66,78 +64,118 @@ export const callNeuralEngine = async (
   userKeys: ExternalKeys = {}
 ): Promise<NeuralResult> => {
   
-  if (engine === NeuralEngine.GEMINI_3_FLASH_LITE || engine === NeuralEngine.GEMINI_3_FLASH || engine === NeuralEngine.GEMINI_3_PRO) {
-    return withRetry(async () => {
-      const apiKey = getActiveApiKey(userKeys[engine]);
-      if (!apiKey) {
-        throw new Error("API Key missing. Please ensure you have a valid GEMINI_API_KEY in your environment, selected an AI Studio key, or provided a custom key in settings.");
-      }
-      const ai = new GoogleGenAI({ apiKey });
-      const parts: any[] = [{ text: prompt }];
-      if (file) {
-        parts.push({
-          inlineData: { data: file.data, mimeType: file.mimeType }
-        });
-      }
+  // FIX: Check if the engine name contains "gemini" (handles all versions: 1.5, 2.0, 3.1, etc.)
+  const isGeminiModel = engine.toLowerCase().includes("gemini");
 
-      const response: GenerateContentResponse = await ai.models.generateContent({
-        model: engine,
-        contents: { parts },
-        config: {
-          systemInstruction,
-          temperature: 0.7,
-          topP: 0.95,
-          topK: 64,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
-        },
-      });
+  if (isGeminiModel) {
+    const availableKeys = getGeminiKeys(userKeys[engine]);
 
-      return {
-        text: response.text || "No content generated.",
-        thought: `Neural synthesis complete via ${engine} node.`
+    if (availableKeys.length === 0) {
+      return { 
+        text: `<div class="p-6 bg-orange-50 text-orange-700 border border-orange-200 rounded-xl">
+                <strong>Configuration Required:</strong> No Gemini API Keys found. 
+                Please add <code>VITE_GEMINI_API_KEYS</code> to your Vercel Environment Variables.
+               </div>` 
       };
-    }).catch((error: any) => ({ 
-      text: `<div class="p-6 bg-red-50 text-red-600 rounded-xl">Error: ${error.message}</div>` 
-    }));
+    }
+
+    // Loop through all keys (Rotation logic)
+    for (let i = 0; i < availableKeys.length; i++) {
+      try {
+        return await withRetry(async () => {
+          const ai = new GoogleGenAI({ apiKey: availableKeys[i] });
+          const parts: any[] = [{ text: prompt }];
+          
+          if (file) {
+            parts.push({ inlineData: { data: file.data, mimeType: file.mimeType } });
+          }
+
+          const response: GenerateContentResponse = await ai.models.generateContent({
+            model: engine, // This passes the exact string (e.g. "gemini-3.1-flash-lite-preview")
+            contents: { parts },
+            config: {
+              systemInstruction,
+              temperature: 0.7,
+              topP: 0.95,
+              topK: 64
+            },
+          });
+
+          return {
+            text: response.text || "No content generated.",
+            thought: `Neural synthesis complete via ${engine} (Key #${i + 1}/${availableKeys.length})`
+          };
+        });
+      } catch (error: any) {
+        // If Quota Error and we have more keys, try next key
+        if (isQuotaError(error) && i < availableKeys.length - 1) {
+          console.warn(`Gemini Key #${i + 1} exhausted (Quota). Rotating to next key...`);
+          continue; 
+        }
+        // If it's the last key or not a quota error, show the specific error
+        return { text: `<div class="p-6 bg-red-50 text-red-600 rounded-xl border border-red-200"><strong>Neural Error:</strong> ${error.message}</div>` };
+      }
+    }
   }
 
+  // ==========================================
+  //  NON-GEMINI ENGINES (GPT, Grok, Deepseek)
+  // ==========================================
   const userKey = userKeys[engine];
-  if (!userKey) return { text: `<div class="p-6 bg-orange-50 text-orange-600">Key required for ${engine}</div>` };
+  if (!userKey) {
+      return { text: `<div class="p-6 bg-orange-50 text-orange-600 border border-orange-200 rounded-xl">API Key required for ${engine} in Settings.</div>` };
+  }
 
   return withRetry(async () => {
     let endpoint = "";
-    if (engine === NeuralEngine.GPT_4O) endpoint = "https://api.openai.com/v1/chat/completions";
-    else if (engine === NeuralEngine.GROK_3) endpoint = "https://api.x.ai/v1/chat/completions";
-    else if (engine === NeuralEngine.DEEPSEEK_V3) endpoint = "https://api.deepseek.com/chat/completions";
+    if (engine.includes("gpt")) endpoint = "https://api.openai.com/v1/chat/completions";
+    else if (engine.includes("grok")) endpoint = "https://api.x.ai/v1/chat/completions";
+    else if (engine.includes("deepseek")) endpoint = "https://api.deepseek.com/chat/completions";
 
     const response = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userKey}` },
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${userKey}` 
+      },
       body: JSON.stringify({
         model: engine,
-        messages: [{ role: "system", content: systemInstruction }, { role: "user", content: prompt }],
+        messages: [
+            { role: "system", content: systemInstruction }, 
+            { role: "user", content: prompt }
+        ],
         temperature: 0.7
       })
     });
 
+    if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error?.message || "External API call failed");
+    }
+
     const data = await response.json();
-    return { text: data.choices[0].message.content, thought: `External synthesis via ${engine}.` };
-  }).catch((error: any) => ({ text: `<div class="p-6 bg-red-50 text-red-600">Error: ${error.message}</div>` }));
+    return { 
+        text: data.choices[0].message.content, 
+        thought: `External synthesis via ${engine}.` 
+    };
+  }).catch((error: any) => ({ 
+      text: `<div class="p-6 bg-red-50 text-red-600 border border-red-200 rounded-xl"><strong>${engine} Error:</strong> ${error.message}</div>` 
+  }));
 };
 
-// Fixed initialization and property access for generateNeuralOutline.
+// ==========================================
+//  OUTLINE GENERATOR (With Rotation)
+// ==========================================
 export const generateNeuralOutline = async (
   prompt: string
 ): Promise<OutlineItem[]> => {
-  try {
-    const activeKey = getActiveApiKey();
-    if (!activeKey) {
-      console.warn("No API key available for outline generation.");
-      return [];
-    }
-    const ai = new GoogleGenAI({ apiKey: activeKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+  const availableKeys = getGeminiKeys();
+
+  for (let i = 0; i < availableKeys.length; i++) {
+    try {
+      const ai = new GoogleGenAI({ apiKey: availableKeys[i] });
+      const response = await ai.models.generateContent({
+        model: 'gemini-1.5-flash', // Outline is light, always use flash
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -153,7 +191,10 @@ export const generateNeuralOutline = async (
                     type: Type.OBJECT,
                     properties: {
                       title: { type: Type.STRING },
-                      children: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { title: { type: Type.STRING } } } }
+                      children: { 
+                          type: Type.ARRAY, 
+                          items: { type: Type.OBJECT, properties: { title: { type: Type.STRING } } } 
+                      }
                     }
                   }
                 }
@@ -164,7 +205,6 @@ export const generateNeuralOutline = async (
         }
       });
 
-      // Access .text property directly.
       const jsonStr = response.text || "[]";
       const data = JSON.parse(jsonStr);
       
@@ -179,7 +219,12 @@ export const generateNeuralOutline = async (
 
       return addIds(data);
     } catch (error: any) {
-      console.error(`Outline generation failed.`, error.message);
+      if (isQuotaError(error) && i < availableKeys.length - 1) {
+        continue; // Try next key
+      }
+      console.error(`Outline generation failed:`, error.message);
       return [];
     }
+  }
+  return [];
 };
