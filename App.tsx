@@ -96,10 +96,10 @@ function App() {
   const [worksheetContent, setWorksheetContent] = useState<string>('');
   const [showSettings, setShowSettings] = useState(false);
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('COMMAND');
-  const [isFrameEnabled, setIsFrameEnabled] = useState(false);
+  const [isFrameEnabled, setIsFrameEnabled] = useState(true);
   const [enablePages, setEnablePages] = useState(false);
   const [isPartBackgroundEnabled, setIsPartBackgroundEnabled] = useState(false);
-  const [isInstructionBackgroundEnabled, setIsInstructionBackgroundEnabled] = useState(false);
+  const [isInstructionBackgroundEnabled, setIsInstructionBackgroundEnabled] = useState(true);
   const [globalLayout, setGlobalLayout] = useState<number>(0); // 0: Clean, 1: Lined, 2: Grid
   
   const [activeLogicCategory, setActiveLogicCategory] = useState<RuleCategory>('General');
@@ -321,10 +321,17 @@ function App() {
       const saved = localStorage.getItem(MASTER_PROTOCOLS_KEY);
       let parsed = saved ? JSON.parse(saved) : DEFAULT_MASTER_PROTOCOLS;
       if (!Array.isArray(parsed)) parsed = DEFAULT_MASTER_PROTOCOLS;
+      
+      // Force update existing defaults from constants.ts
+      const updated = parsed.map((p: any) => {
+        const fresh = DEFAULT_MASTER_PROTOCOLS.find(f => f.id === p.id);
+        return fresh ? { ...p, ...fresh } : p;
+      });
+
       // Auto-merge missing defaults
-      const existingIds = new Set(parsed.map((p: any) => p.id));
+      const existingIds = new Set(updated.map((p: any) => p.id));
       const missing = DEFAULT_MASTER_PROTOCOLS.filter(p => !existingIds.has(p.id));
-      return [...parsed, ...missing];
+      return [...updated, ...missing];
     } catch { return DEFAULT_MASTER_PROTOCOLS; }
   });
   const [strictRules, setStrictRules] = useState<StrictRule[]>(() => {
@@ -332,10 +339,17 @@ function App() {
       const saved = localStorage.getItem(STRICT_RULES_KEY);
       let parsed = saved ? JSON.parse(saved) : DEFAULT_STRICT_RULES;
       if (!Array.isArray(parsed)) parsed = DEFAULT_STRICT_RULES;
+
+      // Force update existing defaults from constants.ts
+      const updated = parsed.map((r: any) => {
+        const fresh = DEFAULT_STRICT_RULES.find(f => f.id === r.id);
+        return fresh ? { ...r, ...fresh } : r;
+      });
+
       // Auto-merge missing defaults
-      const existingIds = new Set(parsed.map((r: any) => r.id));
+      const existingIds = new Set(updated.map((r: any) => r.id));
       const missing = DEFAULT_STRICT_RULES.filter(r => !existingIds.has(r.id));
-      return [...parsed, ...missing];
+      return [...updated, ...missing];
     } catch { return DEFAULT_STRICT_RULES; }
   });
   const [instructionTemplates, setInstructionTemplates] = useState<InstructionTemplate[]>(() => {
@@ -344,16 +358,13 @@ function App() {
       let parsed = saved ? JSON.parse(saved) : INITIAL_TEMPLATES;
       if (!Array.isArray(parsed)) parsed = INITIAL_TEMPLATES;
       
-      // Force update labels and professionalLabels from INITIAL_TEMPLATES
+      // Force update all fields from INITIAL_TEMPLATES for existing IDs
       const updated = parsed.map((t: any) => {
         const fresh = INITIAL_TEMPLATES.find(f => f.id === t.id);
         if (fresh) {
           return {
             ...t,
-            label: fresh.label,
-            professionalLabel: fresh.professionalLabel,
-            // Also update prompt if it's a default one (optional, but safer for consistency)
-            prompt: fresh.prompt 
+            ...fresh
           };
         }
         return t;
@@ -1060,7 +1071,14 @@ ${componentLogic}
             onTemplateSelect={(t) => toggleInstruction(t.id)}
           />
 
-          <main className={`flex-1 bg-slate-50 flex flex-col overflow-hidden transition-all duration-500 ${isSidebarOpen ? 'ml-[240px]' : 'ml-0'}`}>
+          <main className={`flex-1 bg-slate-50 flex flex-col overflow-hidden transition-all duration-500 ${isSidebarOpen ? 'md:ml-[240px] ml-0' : 'ml-0'}`}>
+            {/* Mobile Overlay */}
+            {isSidebarOpen && (
+              <div 
+                className="fixed inset-0 bg-slate-900/20 z-[100] md:hidden"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+            )}
             {/* Top Navigation Bar */}
             <header className="h-20 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-6">
